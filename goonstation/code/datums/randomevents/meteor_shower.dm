@@ -182,6 +182,10 @@ var/global/meteor_shower_active = 0
 		name = "small meteor"
 		icon_state = "smallf"
 		hits = 9
+	martian
+		name = "Dust clump"
+		//icon_state = "martian"
+		hits = 2
 
 	New(var/atom/my_spawn, var/atom/trg)
 		if(!my_spawn || !trg)
