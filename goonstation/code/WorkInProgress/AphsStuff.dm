@@ -487,53 +487,27 @@
 						if(S)
 							spawn(sound_delay)
 								H << S
-/area/marsoutpost/mars/duststorm
+
+/area/marsoutpost/duststorm
 	name = "Barren Planet"
 	icon_state = "yellow"
-	var/storm = 0
-	New(var/storm = 0)
-		..()
-		src.storm = storm
-		if(storm)
-			overlays += image(icon = 'icons/turf/areas.dmi', icon_state = "dustverlay", layer = EFFECTS_LAYER_BASE)
-		else
-			return
-		spawn(10)
-			process()
-	proc/set_storm(var/storm = 0)
-		src.storm = storm
-		if(storm)
-			overlays += image(icon = 'icons/turf/areas.dmi', icon_state = "dustverlay", layer = EFFECTS_LAYER_BASE)
-			update_overlays()
-			spawn(10)
-				process()
-			return
-		else
-			overlays = null
-			update_overlays()
-			return
 
-	proc/process()
-		if(!storm)
-			return
-		var/sound/S = null
-		var/sound_delay = 0
-		while(ticker && ticker.current_state < GAME_STATE_FINISHED && storm)//srsly though this needs sorting it's horrible but it's only one thing
-			sleep(60)
-			if (ticker.current_state == GAME_STATE_PLAYING)
-				for(var/mob/living/carbon/human/H in src)
-					if(!prob(10))
-						continue
-					if (istype(O, /mob/living/carbon/human))//TODO add some small mars meaty ores to attack the station
-						var/mob/living/jerk = O
-						if (jerk.stat != 2)
-							if((istype(jerk:wear_suit, /obj/item/clothing/suit/armor/mars))&&(istype(jerk:head, /obj/item/clothing/head/helmet/mars))) return
-							random_brute_damage(jerk, 60)//debuffed slightly that would be a bit harsh
-							jerk.weakened = 40
-							step(jerk,EAST)
-							if(prob(50))
-								playsound(src.loc, 'sound/effects/bloody_stabOLD.ogg', 50, 1)
-								boutput(jerk, pick("Dust gets caught in your eyes!","The wind blows you off course!","Debris pierces through your skin!"))
+	New()
+		..()
+		overlays += image(icon = 'icons/turf/areas.dmi', icon_state = "dustverlay", layer = EFFECTS_LAYER_BASE)
+
+	Entered(atom/movable/O)
+		..()
+		if (istype(O, /mob/living/carbon/human))
+			var/mob/living/jerk = O
+			if (jerk.stat != 2)
+				if((istype(jerk:wear_suit, /obj/item/clothing/suit/armor/mars))&&(istype(jerk:head, /obj/item/clothing/head/helmet/mars))) return
+				random_brute_damage(jerk, 100)
+				jerk.weakened = 40
+				step(jerk,EAST)
+				if(prob(50))
+					playsound(src.loc, 'sound/effects/bloody_stabOLD.ogg', 50, 1)
+					boutput(jerk, pick("Dust gets caught in your eyes!","The wind blows you off course!","Debris pierces through your skin!"))
 
 
 
