@@ -178,6 +178,7 @@
 		..()
 
 // cogwerks notes: I'm starting with the first router from QM and moving sorta clockwise.
+
 /obj/machinery/cargo_router/Router1
 	New()
 		destinations = list("Airbridge" = WEST, "Cafeteria" = NORTH, "EVA" = WEST, "Disposals" = NORTH, "QM" = NORTH, "Engine" = NORTH, "Catering" = NORTH, "MedSci" = NORTH, "Security" = NORTH)
@@ -262,6 +263,56 @@
 		default_direction = EAST
 		..()
 
+//"Engine" = EAST, "Botaony" = EAST,  "QM" = EAST, "Engine" = EAST,  "Medical" = EAST,"Science" = EAST, "Outpost" = EAST ,"Security" = EAST
+/obj/machinery/cargo_router/Disposals // returns things to cargo that have been flung out by retards
+	New()
+		destinations = list("Engine" = EAST, "Botaony" = EAST,  "QM" = EAST, "Engine" = EAST,  "Medical" = EAST,"Science" = EAST, "Outpost" = EAST, "Security" = EAST)
+		default_direction = SOUTH
+		..()
+/obj/machinery/cargo_router/Botany
+	New()
+		destinations = list("Engine" = NORTH, "Botany" = NORTH,  "QM" = NORTH, "Engine" = NORTH,  "Medical" = WEST,"Science" = NORTH, "Outpost" = NORTH, "Security" = NORTH)
+		default_direction = WEST
+		..()
+/obj/machinery/cargo_router/Science
+	New()
+		destinations = list("Science" = SOUTH)
+		default_direction = WEST
+/obj/machinery/cargo_router/Botanyin
+	New()
+		destinations = list("Botany" = SOUTH)
+		default_direction = WEST
+		..()
+
+
+/obj/machinery/cargo_router/Security //Most of the returns are handled by the botany router , only sec deliveries are handled here
+	New()
+		destinations = list("Security" = SOUTH)
+		default_direction = WEST
+		..()
+
+/obj/machinery/cargo_router/Engineering //Most of the returns are handled by the botany router , only eng deliveries are handled here
+	New()
+		destinations = list("Engine" = SOUTH)
+		default_direction = WEST
+		..()
+
+/obj/machinery/cargo_router/Cargo //Most of the returns are handled by the botany router , only eng deliveries are handled here
+	New()
+		destinations = list("QM" = NORTH, "Medical" = SOUTH)
+		default_direction = WEST
+		..()
+/obj/machinery/cargo_router/Cargo_int //Most of the returns are handled by the botany router , only eng deliveries are handled here
+	New()
+		destinations = list("QM" = WEST)
+		default_direction = EAST
+		..()
+/obj/machinery/cargo_router/Medical //Most of the returns are handled by the botany router , only eng deliveries are handled here
+	New()
+		destinations = list("Medical" = EAST)
+		default_direction = WEST
+		..()
+
 /obj/machinery/computer/barcode
 	name = "Barcode Computer"
 	desc = "Used to print barcode stickers for the cargo routing system."
@@ -275,7 +326,7 @@
 	var/datum/data/record/account = null
 
 
-	var/list/destinations = list("Airbridge", "Cafeteria", "EVA", "Engine", "Disposals", "QM", "Catering", "MedSci", "Security") //These have to match the ones on the cargo routers for the routers to work.
+	var/list/destinations = list( "Engine","Botany","QM", "Medical","Science" ,"Security","Outpost") //These have to match the ones on the cargo routers for the routers to work.
 
 	attack_hand(var/mob/user as mob)
 		if (..(user))

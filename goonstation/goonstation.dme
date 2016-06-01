@@ -1193,5 +1193,6 @@ var/datum/preMapLoad/preMapLoad = new
 #include "libs\JSON\_JSON.dm"
 #include "libs\JSON\JSON Reader.dm"
 #include "libs\JSON\JSON Writer.dm"
+#include "maps\mars.dmm"
 #include "maps\config\map.dm"
 // END_INCLUDE

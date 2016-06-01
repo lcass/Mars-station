@@ -586,7 +586,7 @@ var/global/client/ff_debugger = null
 	opacity = 0
 
 /turf/simulated/shuttle/wall/corner
-	icon_state = "wall_space"
+	icon_state = "wall_trans"
 	opacity = 0
 
 /turf/simulated/shuttle/wall/destroyable // for the moveable shuttles, so you can sabotage the research shuttle or whatever
@@ -850,7 +850,7 @@ var/global/client/ff_debugger = null
 	if (new_type)
 		new_turf = new new_type( locate(src.x, src.y, src.z) )
 		if (!isturf(new_turf))
-			new_turf = new /turf/space( locate(src.x, src.y, src.z) )
+			new_turf =  new /turf/unsimulated/floor/setpieces/martian( locate(src.x, src.y, src.z) )
 
 	else switch(what)
 		if ("Floor")
@@ -882,7 +882,7 @@ var/global/client/ff_debugger = null
 			else
 				new_turf = new /turf/simulated/wall( locate(src.x, src.y, src.z) )
 		else
-			new_turf = new /turf/space( locate(src.x, src.y, src.z) )
+			new_turf = new /turf/unsimulated/floor/setpieces/martian( locate(src.x, src.y, src.z) )
 
 	if(oldmat && !istype(new_turf, /turf/space)) new_turf.setMaterial(oldmat)
 
