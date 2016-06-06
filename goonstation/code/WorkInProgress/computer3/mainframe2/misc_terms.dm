@@ -27,7 +27,7 @@
 	var/net_number = 0 //A cute little bitfield (0-3 exposed) to allow multiple networks on one wirenet.  Differentiate between intended hosts, if they care.
 	var/panel_open = 0
 
-	proc/post_status(var/target_id, var/key, var/value, var/key2, var/value2, var/key3, var/value3, var/key4, var/value4)
+	proc/post_status(var/target_id, var/key, var/value, var/key2, var/value2, var/key3, var/value3, var/key4, var/value4 , var/data_list = null)//datalist should be param form , eg A=b&b=C
 		if(!src.link || !target_id)
 			return
 
@@ -35,6 +35,10 @@
 		signal.source = src
 		signal.transmission_method = TRANSMISSION_WIRE
 		signal.data[key] = value
+		if(data_list)
+			var/list/indv_data = params2list(data_list)
+			for(var/a in indv_data)
+				signal.data[a] = indv_data[a]
 		if(key2)
 			signal.data[key2] = value2
 		if(key3)
