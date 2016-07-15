@@ -13,12 +13,12 @@ var/list/forensic_IDs = new/list() //Global list of all guns, based on bioholder
 	throw_speed = 4
 	throw_range = 6
 	contraband = 4
+
 	var/spread_angle = 0
 	var/datum/projectile/current_projectile = null
 	var/list/projectiles = null
 	var/current_projectile_num = 1
 	var/silenced = 0
-
 
 	var/forensic_ID = null
 	var/add_residue = 0 // Does this gun add gunshot residue when fired (Convair880)?

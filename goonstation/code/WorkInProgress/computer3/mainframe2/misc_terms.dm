@@ -27,7 +27,7 @@
 	var/net_number = 0 //A cute little bitfield (0-3 exposed) to allow multiple networks on one wirenet.  Differentiate between intended hosts, if they care.
 	var/panel_open = 0
 
-	proc/post_status(var/target_id, var/key, var/value, var/key2, var/value2, var/key3, var/value3, var/key4, var/value4 , var/data_list = null)//datalist should be param form , eg A=b&b=C
+	proc/post_status(var/target_id, var/key, var/value, var/key2, var/value2, var/key3, var/value3, var/key4, var/value4)
 		if(!src.link || !target_id)
 			return
 
@@ -35,10 +35,6 @@
 		signal.source = src
 		signal.transmission_method = TRANSMISSION_WIRE
 		signal.data[key] = value
-		if(data_list)
-			var/list/indv_data = params2list(data_list)
-			for(var/a in indv_data)
-				signal.data[a] = indv_data[a]
 		if(key2)
 			signal.data[key2] = value2
 		if(key3)
@@ -611,7 +607,7 @@
 			if(!string)
 				return 1
 
-			if(ckey(string) != dd_replacetext(lowertext(string), " ", null))
+			if(ckey(string) != replacetext(lowertext(string), " ", null))
 				return 1
 
 			if(findtext(string, "/"))
@@ -1598,7 +1594,7 @@
 					src.post_status(target, "command","term_connect","data","noreply","device",src.device_tag)
 				src.updateUsrDialog()
 				spawn(5) //Sign up with the driver (if a mainframe contacted us)
-					src.post_status(target,"command","term_message","data","command=register[(frequencies && frequencies.len) ? "&freqs=[dd_list2text(frequencies,",")]" : ""]")
+					src.post_status(target,"command","term_message","data","command=register[(frequencies && frequencies.len) ? "&freqs=[jointext(frequencies,",")]" : ""]")
 				return
 
 			if("term_message","term_file")
@@ -1951,7 +1947,7 @@
 						if(istype(signal.data_file, /datum/computer/file/record))
 							var/datum/computer/file/record/rec = signal.data_file
 							if (rec.fields)
-								buffer_add = dd_list2text(rec.fields, "<br>")
+								buffer_add = jointext(rec.fields, "<br>")
 						else
 							buffer_add = signal.data_file:data
 
