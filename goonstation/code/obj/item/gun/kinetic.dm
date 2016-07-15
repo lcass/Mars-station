@@ -362,6 +362,213 @@
 		ammo = new/obj/item/ammo/bullets/ak47
 		current_projectile = new/datum/projectile/bullet/ak47
 		..()
+//magazine weapons go here
+
+/obj/item/gun/kinetic/magazine
+	var/obj/item/attachment/list/attachments = list()
+	var/attach_muzzle = 0
+	var/attach_rail = 0
+	var/attach_stock = 0
+	var/attach_under = 0
+	var/delayed = 0
+	//add verb for unique action
+	verb/strip()
+		name="strip attachments"
+		for(var/obj/item/attachment/attach in attachments)
+			attach.loc = get_turf(src)
+		attachments = list()
+		boutput(usr, "<span style=\"color:red\">You strip the [src.name] of attachments.</span>")
+	verb/action()
+		name="toggle attachment"
+		var/list/attachnames = list()
+		for(var/obj/item/attachment/attach in attachments)
+			attachnames += attach.name
+		var/attachname = input(usr, "Which attachment?", "toggle attachment", null) in attachnames
+		if(attachname)
+			for(var/obj/item/attachment/attach in attachments)
+				if(attach.name == attachname)
+					attach.effect()
+					break
+
+	attackby(obj/item/a as obj, mob/user as mob)
+		if(istype(a, /obj/item/ammo/bullets))
+			if(src.ammo)
+				user.show_text("There is already a magazine loaded.", "red")
+				return
+			var/obj/item/ammo/bullets/b = a
+			if(b.caliber == src.caliber)
+				user.drop_item()
+				b.loc = src
+				ammo = b
+				user.show_text("You load the magazine into the [src.name]","blue")
+				return
+			else
+				user.show_text("This magazine won't fit!","red")
+				return
+		if(istype(a,/obj/item/attachment))
+			var/obj/item/attachment/attach = a
+			var/muzzle = 0
+			var/rail = 0
+			var/stock = 0
+			var/under = 0
+			for(var/obj/item/attachment/attacht in attachments)
+				switch(attacht.attach_type)
+					if("muzzle")
+						muzzle = 1
+					if("underbarrel")
+						under = 1
+					if("stock")
+						stock = 1
+					if("rail")
+						rail = 1
+			switch(attach.attach_type)
+				if("muzzle")
+					if(!attach_muzzle || muzzle)
+						user.show_text("The [attach.name] doesn't fit on the [src.name].","blue")
+						return
+				if("underbarrel")
+					if(!attach_under|| under)
+						user.show_text("The [attach.name] doesn't fit on the [src.name].","blue")
+						return
+				if("stock")
+					if(!attach_stock || stock)
+						user.show_text("The [attach.name] doesn't fit on the [src.name].","blue")
+						return
+				if("rail")
+					if(!attach_rail || rail)
+						user.show_text("The [attach.name] doesn't fit on the [src.name].","blue")
+						return
+			user.drop_item()
+			attach.loc = src
+			attachments += attach
+			user.show_text("You attach the [attach.name] to the [src.name].","blue")
+		else
+			..()
+	attack_hand(mob/user as mob)//add update icon when there is a different icon
+
+		if ((src.loc == user) && user.find_in_hand(src)) // Make sure it's not on the belt or in a backpack.
+			src.add_fingerprint(user)
+			if (src.ammo)
+				user.put_in_hand_or_drop(ammo)
+				user.show_text("You unload the [src.name].","red")
+				src.ammo = null
+				return
+		return ..()
+
+	shoot(var/target,var/start ,var/mob/user)
+		if(delayed)
+			return
+		if (src.canshoot())
+			if (src.auto_eject)
+				var/turf/T = get_turf(src)
+				if(T)
+					if (src.current_projectile.casing && (src.sanitycheck(1, 0) == 1))
+						var/number_of_casings = max(1, src.current_projectile.shot_number)
+						//DEBUG("Ejected [number_of_casings] casings from [src].")
+						for (var/i = 1, i <= number_of_casings, i++)
+							var/obj/item/casing/C = new src.current_projectile.casing(T)
+							C.forensic_ID = src.forensic_ID
+							C.loc = T
+			else
+				if (src.casings_to_eject < 0)
+					src.casings_to_eject = 0
+				src.casings_to_eject += src.current_projectile.shot_number
+		if(!canshoot())
+			if (ismob(user))
+				user.show_text("*click* *click*", "red") // No more attack messages for empty guns (Convair880).
+			return
+		if(!process_ammo(user))
+			return
+		if (!istype(target, /turf) || !istype(start, /turf))
+			return
+		if (!istype(src.current_projectile,/datum/projectile/))
+			return
+		var/accuracy = 0
+		var/supress = 0
+		var/delay = 0
+		var/damage = 0
+		var/recoil = 0
+		var/penetration = 0
+		for(var/obj/item/attachment/attachment in src.attachments)
+			if(attachment.on_fire())//called before to check things like bipods , if it returns one then the gun is destroyed
+				user.drop_item()
+				src.visible_message("<span style=\"color:red\">The [src.name] disintegrates!</span>")
+				qdel(src)
+				return
+			accuracy += attachment.accuracy
+			supress += attachment.supress
+			delay += attachment.delay
+			damage += attachment.damage
+			recoil += attachment.recoil
+			penetration += attachment.penetration
+		if(recoil > 0)
+			shake_camera(user, 5, recoil)
+		var/datum/projectile/bullet/firing = current_projectile
+		firing.power += damage
+		if(firing.power < 0)
+			firing.power = 0//don't want to heal targets with magical bullets
+		firing.supress = supress * 15
+		var/obj/projectile/P = shoot_projectile_ST_pixel_spread(user, firing, target, 0, 0, max(0,(15 - 3*accuracy)))//accuracy goes from -5 to 5 generally so 20 is default spread (10 deg either side) and -5 will make it 40 deg
+		if (P)
+			alter_projectile(P)
+			P.forensic_ID = src.forensic_ID
+		if(delay < 0)
+			delay = 0
+		if(user)
+			if(!src.silenced)
+				for(var/mob/O in AIviewers(user, null))
+					O.show_message("<span style=\"color:red\"><B>[user] fires [src] at [target]!</B></span>", 1, "<span style=\"color:red\">You hear a gunshot</span>", 2)
+			else
+				if (ismob(user)) // Fix for: undefined proc or verb /obj/item/mechanics/gunholder/show text().
+					user.show_text("<span style=\"color:red\">You silently fire the [src] at [target]!</span>") // Some user feedback for silenced guns would be nice (Convair880).
+
+			var/turf/T = target
+			logTheThing("combat", user, null, "fires \a [src] from [log_loc(user)], vector: ([T.x - user.x], [T.y - user.y]), dir: <I>[dir2text(get_dir(user, target))]</I>, projectile: <I>[P.name]</I>[P.proj_data && P.proj_data.type ? ", [P.proj_data.type]" : null]")
+
+		if (ismob(user))
+			var/mob/M = user
+			if (ishuman(M) && src.add_residue) // Additional forensic evidence for kinetic firearms (Convair880).
+				var/mob/living/carbon/human/H = user
+				H.gunshot_residue = 1
+			/*if (!disable_next_click) aggressive thing, so disable_next_click shouldn't affect this
+				*/M.next_click = world.time + 4
+		if(delay)
+			delayed = 1
+			spawn(delay)
+				delayed = 0
+
+	examine()
+		..()
+		for(var/obj/item/attachment/attach in attachments)
+			switch(attach.attach_type)
+				if("muzzle")
+					desc += "It has a [attach.name] on it's muzzle"
+				if("underbarrel")
+					desc += "It has a [attach.name] under the barrel"
+				if("rail")
+					desc += "It has a [attach.name] on it's rail"
+				if("stock")
+					desc += "It has a [attach.name] as a stock"
+		return
+/obj/item/gun/kinetic/magazine/police//weapon that has a decent damage for dealing with traitors but also deals stuns and doesn't impale people with rounds.
+	name = "AUG-35"
+	desc = "Designed on an old austrian rifle this weapon has found service amongst police forces around the galaxy."
+	icon_state = "bullpup"
+	force = 30.0
+	contraband = 0
+	caliber = 0.45
+	max_ammo_capacity = 31
+	auto_eject = 1
+	attach_under = 1
+	attach_muzzle = 1
+	attach_stock = 0
+	attach_rail = 1
+	New()
+		ammo = new/obj/item/ammo/bullets/police
+		current_projectile = new/datum/projectile/bullet/police
+		attachments += new/obj/item/attachment/boom()
+		attachments += new/obj/item/attachment/rds()
+		..()
 
 /obj/item/gun/kinetic/ak47/vr
 	icon = 'icons/effects/VR.dmi'

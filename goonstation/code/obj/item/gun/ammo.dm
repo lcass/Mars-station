@@ -379,6 +379,26 @@
 	max_amount = 30.0
 	caliber = 0.308
 
+/obj/item/ammo/bullets/police
+	sname = ".45 Auto"
+	name = "AUG-35 magazine"
+	ammo_type = new/datum/projectile/bullet/police
+	icon = 'icons/obj/gun.dmi'
+	icon_state = "tec9mag"
+	amount_left = 31.0
+	max_amount = 31.0
+	caliber = 0.45
+
+/obj/item/ammo/bullets/police/hv
+	sname = ".45 Auto"
+	name = "AUG-35 magazine high velocity"
+	ammo_type = new/datum/projectile/bullet/police/hv
+	icon = 'icons/obj/gun.dmi'
+	icon_state = "tec9mag"
+	amount_left = 20.0
+	max_amount = 20.0
+	caliber = 0.45
+
 /obj/item/ammo/bullets/rifle_3006
 	sname = ".308 AP"
 	name = ".308 rifle magazine"
