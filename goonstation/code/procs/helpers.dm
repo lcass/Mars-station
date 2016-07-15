@@ -465,13 +465,13 @@ var/list/hasvar_type_cache = list()
 	. = max(low,min(high,num))
 
 /*
-/proc/dd_replacetext(text, search_string, replacement_string)
+/proc/replacetext(text, search_string, replacement_string)
 	. = splittext(text, search_string)
-	. = dd_list2text(., replacement_string)
+	. = splittext(., replacement_string)
 
-/proc/dd_replaceText(text, search_string, replacement_string)
+/proc/replacetext(text, search_string, replacement_string)
 	. = splittext(text, search_string)
-	. = dd_list2text(., replacement_string)
+	. = splittext(., replacement_string)
 */
 
 /proc/dd_hasprefix(text, prefix)
@@ -495,7 +495,7 @@ var/list/hasvar_type_cache = list()
 		. = findtext(text, suffix, start, null) //was findtextEx
 
 /*
-/proc/dd_text2list(text, separator, var/list/withinList)
+/proc/splittext(text, separator, var/list/withinList)
 	var/textlength = length(text)
 	var/separatorlength = length(separator)
 	if(withinList && !withinList.len) withinList = null
@@ -512,7 +512,7 @@ var/list/hasvar_type_cache = list()
 			textList += ""
 			return textList
 
-/proc/dd_list2text(var/list/the_list, separator)
+/proc/splittext(var/list/the_list, separator)
 	var/total = the_list.len
 	if(!total)
 		return

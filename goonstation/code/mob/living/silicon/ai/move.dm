@@ -50,7 +50,7 @@
 			continue
 
 		var/shared_types = 0 //how many levels deep the old camera and the closest camera's areas share
-		//for instance, /area/A and /area/B would have shared_types = 2 (because of how dd_text2list works)
+		//for instance, /area/A and /area/B would have shared_types = 2 (because of how splittext works)
 		//whereas area/A/B and /area/A/C would have it as 3
 
 		var/area/cur_area = get_area(current)
@@ -151,7 +151,7 @@
 				continue
 
 			var/shared_types = 0 //how many levels deep the old camera and the closest camera's areas share
-			//for instance, /area/A and /area/B would have shared_types = 2 (because of how dd_text2list works)
+			//for instance, /area/A and /area/B would have shared_types = 2 (because of how splittext works)
 			//whereas area/A/B and /area/A/C would have it as 3
 
 			var/area/cur_area = get_area(current)

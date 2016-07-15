@@ -525,6 +525,32 @@ toxic - poisons
 				affected.Remove(O)
 		return ..()
 
+/datum/projectile/bullet/police
+	name = "bullet"
+	power = 5
+	damage_type = D_PIERCING
+	hit_type = DAMAGE_STAB
+//	implanted = /obj/item/implant/projectile/bullet_308
+	casing = /obj/item/casing/rifle
+	caliber = 0.45
+	icon_turf_hit = "bhole-small"
+
+	on_hit(atom/hit, dirflag)
+		if(istype(hit,/mob/living/carbon))
+			var/mob/living/carbon/C = hit
+			if(prob(0.4))
+				C.weakened+=5//knock them down for a while
+
+/datum/projectile/bullet/police/hv
+	name = "bullet"
+	power = 22
+	damage_type = D_PIERCING
+	hit_type = DAMAGE_STAB
+//	implanted = /obj/item/implant/projectile/bullet_308
+	casing = /obj/item/casing/rifle
+	caliber = 0.45
+	icon_turf_hit = "bhole-small"
+
 /datum/projectile/bullet/smoke
 	name = "smoke grenade"
 	window_pass = 0

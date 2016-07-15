@@ -1,3 +1,11 @@
+//misc procs
+proc/rad_gas(var/turf/T, var/m = 0)//m is moles , T is turf
+	var/datum/gas/rad_particles/rad = new
+	rad.moles = m
+	if(!T:air:trace_gases)
+		T:air:trace_gases = list()
+	T:air:trace_gases += rad
+
 /obj/beam/custom
 	var/obj/item/lens/lens = null
 	var/power = 1 // any value greater than 1 , when very high the beam becomes a particle
@@ -5,6 +13,7 @@
 	var/wavelength = 1//meters
 	var/particle = 0//is it a particle wave or is it an electromagnetic wave (quantumish)
 	layer = OBJ_LAYER - 0.1//we want it to be just underneath the machines
+	icon_state = "h7beam1"
 	New(location, newLimit, newPower, wavelength)//Lets not calculate the wavelength that would be painful , just do it normally.
 		..()
 		/*light = new /datum/light/point
@@ -19,7 +28,6 @@
 			src.limit = newLimit
 		if (newPower != null)
 			src.power = newPower
-		src.icon_state = "h7beam[min(src.power, 5)]"
 		spawn(2)
 			generate_next()
 		return
@@ -60,7 +68,7 @@
 				if(istype(held ,/obj/item/fuel_pellet))
 					//fusion related stuff goes ere , emit particles n what not
 				if(istype(held ,/obj/item/lens))
-					wavelength * 0.68 //reduce the wavelength
+					wavelength *= 0.68 //reduce the wavelength
 					generate_next()
 
 	generate_next()
@@ -81,6 +89,92 @@
 				continue
 		return
 
+//the emitted neutrino beam
+/obj/beam/neutrino
+	var/obj/item/lens/lens = null
+	var/power = 1 //power of the neutrino
+	limit = 2 // so people randomly spawning these don't make lag fest
+	layer = OBJ_LAYER - 0.1//we want it to be just underneath the machines
+	var/penetration = 0.05//very low to start with
+	var/datum/light/point/light
+	var/limit_boost = 0
+	icon_state = "h7beam1"
+	var/limit_boost_prob = 0.1//chance for the limit to increase by 1
+	New(location, newLimit, newPower)//Lets not calculate the wavelength that would be painful , just do it normally.
+		..()
+		limit = newLimit
+		power = newPower
+
+		light = new
+		light.set_brightness(0.2)//gentle glow
+		light.set_color(0.45, 00,0.86)//deep purple/blue
+		light.set_height(2.4)
+		light.attach(src)
+		light.enable()
+		if(power < 3)
+		else if(power < 5)
+			penetration = 0.15
+		else if(power < 8)
+			penetration = 0.3
+		else if(power < 12)
+			penetration = 0.7
+		else
+			penetration = 0.95
+		spawn(1)//these move faster than the other beams
+			generate_next()
+		return
+
+	hit(atom/movable/AM as mob|obj)
+		light.disable()
+		if(power < 3)//generate a small amount of power and do some minor stuff to mobs
+			//
+		else if(power < 5)//generate a bit more power , and have a chance to go through the person
+			penetration = 0.15
+		else if(power < 8)//do some nasty damage and maybe tear off a limb or two , high chance to go through people and objects
+			penetration = 0.3
+		//beyond this the particles are useless for power generation because they just explode people and objects
+		else if(power < 12)//create a massive burst of radiation and a small explosion on impact , almost certainly continue through the person or object
+			penetration = 0.7
+		else//if the power is any higher cause cataclysmic damage to anything and everything , gib them on sight the cause large explosions , make huge amounts of radiation and cause large explosions
+			penetration = 0.95
+	generate_next()
+		if (src.limit < 1)
+			if(prob(limit_boost_prob))
+				limit_boost = 1
+			else
+				on_limit()
+				return
+		var/turf/nextTurf = get_step(src, src.dir)
+		if (istype(nextTurf))
+			if (nextTurf.density && !prob(penetration))
+				return
+			src.next = new /obj/beam/custom(nextTurf, src.limit-1, src.power)
+			next.dir = src.dir
+			for (var/atom/movable/hitAtom in nextTurf)
+				if (hitAtom.density && !hitAtom.anchored)
+					src.hit(hitAtom)
+					if(!prob(penetration))
+						src.next.limit = 0
+				continue
+		return
+	proc/on_limit()
+		light.disable()
+		//exploshuns n shiznicks
+		if(power < 10)
+			return
+		if(power < 12)
+			rad_gas(get_turf(src), 0.05)//small amount of radiation , lots of these are being produced to only small amounts
+			return
+		if(power < 15)
+			rad_gas(get_turf(src), 0.1)//exploshuns
+			if(prob(0.05))
+				explosion(src, get_turf(src), 0, 0, 2, 2)
+			return
+		else
+			rad_gas(get_turf(src),0.3)
+			if(prob(0.15))
+				explosion(src, get_turf(src), power/15, power/10, 3, 5)
+//todo add a lead shield to prevent the radiation from
 /obj/item_holder//this can hold lenses which aid in amplifying the wave
 	name = "reinforced clamp"
 	desc = "A heavily shielded clamp that looks like it could withstand a laser blast"
@@ -111,28 +205,105 @@
 /obj/item/fuel_pellet
 	name = "fuel pellet"
 	desc = "a miscellaneous fuel pellet , probably just a piece of junk"
-	var/radioacive = 0//when blasted with the laser they become more and more radioactive
-	//need some icons for these
+	icon = 'icons/obj/items.dmi'
+	icon_state = "fuelpellet"
+	var/radioactivity = 0.1//when blasted with the laser they become more and more radioactive
+	var/mass = 10//total mass remaining
+	var/starting_mass = 10//initial mass
+	var/crit_e=10000//critical energy of the fuel pellet
+	var/cur_e=0//current energy of the fuel pellet
+	var/pow_mod = 1//modifies the power of the neutrinos going out  , only make very small changes
+	var/dead = 0//if the fuel pellet is spent (when more than 3/4 of it's mass is used up)
+	New()
+		..()
+		if (!(src in processing_items))
+			processing_items.Add(src)
+
+	proc/fuel_act(var/power , var/wavelength , var/particle)
+		if(dead)
+			return //meh , flavour text would get spammy and any effects would be unnecessary
+		if(power/wavelength > cur_e)
+			radioactivity*= ((power/wavelength)/max(1,cur_e))//on initial activation the wave will be very powerful
+			cur_e += power/wavelength *0.8
+			mass *= max(0.8,(1 - radioactivity)) //slowly reduces the mass , having less mass will reduce the power output and will increase the rate the material becomes radioactive
+		else
+			radioactivity*= ((power/wavelength)/max(1,cur_e))
+			cur_e -= (cur_e - (power/wavelength))/2 //cause the current energy of the pellet to decay towards the power of the beam
+			mass *= max(0.8 , (1 - radioactivity))
+	process()
+		if(dead)
+			processing_items.Remove(src)
+		effects()//call the effects for each individual type of fuel
+		cur_e *= 0.9//reduce energy slowly
+		mass *= min(0.95 , (1 - radioactivity)) //reduce mass slightly slower than with the beam
+		radioactivity *= 0.8//radioactivity rapidly reduces
+		if(cur_e > crit_e && prob(0.05))//It probably will happen but it stops insta death for the poor guy using it
+			var/to_spawn = pick(7,8,9,10,15,20)//create a huge amount of these bastards , use all energy and destroy the pellet.
+			for(var/a = 0 , a < to_spawn , a++)
+				var/obj/beam/neutrino/out_beam = new /obj/beam/neutrino(get_turf(src),pick(9,11,14,14,14,15,18,25),(cur_e/60*to_spawn)*pow_mod)
+				out_beam.dir = pick(NORTH,EAST,WEST,SOUTH)
+			cur_e = 0
+			//produce lots of radioactive gas
+			rad_gas(get_turf(src),min(100,radioactivity*50))
+			dead = 1
+			processing_items.Remove(src)
+			cur_e = 0
+			radioactivity = 0
+			mass = 0.25 * starting_mass
+			return
+		else if(cur_e > crit_e)
+			if(prob(0.1))
+				//eh pump out some radiation and start dropping off energy quickly
+				cur_e *=0.8
+				radioactivity*= 1.5
+				rad_gas(get_turf(src),radioactivity * (cur_e/crit_e))//this will still produce neutrinos
+		if(mass <= 0.25*starting_mass)
+			dead = 1
+			processing_items.Remove(src)//we know we are in processing items so no need to check
+			cur_e = 0
+			radioactivity = 0
+			visible_message("[src.name] fizzles softly")
+			return
+		//we now want to create neutrino outputs in order to produce energy and also to have some funky effects
+		//need to code neutrinos first though /:
+		var/to_spawn = pick(2,3,5,7,9)
+		for(var/a = 0 , a < to_spawn , a++)
+			var/obj/beam/neutrino/out_beam = new /obj/beam/neutrino(get_turf(src),pick(2,3,3,3,4,4,4,5,5,6,7,9),(cur_e/(435*to_spawn))*pow_mod)
+			out_beam.dir = pick(NORTH,EAST,WEST,SOUTH)
+		if(prob(min(0.5,cur_e/crit_e)))//lots of rad = lots of bad.
+			rad_gas(get_turf(src),radioactivity*min(0.2,cur_e/(30*crit_e)))
+	proc/effects()
+		return
 /obj/item/fuel_pellet/gold
 		name = "gold fuel pellet"
 		desc = "A tiny lump of gold suitable for fusion experiments"
+		crit_e = 20000
+		starting_mass = 15// A good alrounder however if doesn't have any special effects
+		mass = 15
 /obj/item/fuel_pellet/uranium
 		name = "uranium fuel pellet"
 		desc = "Glowing and fissile , probably a good idea to whack this with a laser"
+		pow_mod = 5
+		crit_e = 2000//much lower critical energy so more dangerous to operate
+		mass = 6//smaller mass
+		starting_mass = 6
 /obj/item/fuel_pellet/lithium
 		name = "lithium fuel pellet"
 		desc = "A small lump of lithium oxide , it shimmers"
-
+		crit_e = 3000
+		pow_mod = 1.2//has some special effects that occur when you use it.
 // end of fuel pellets
+//fuel pellet storage
+
 
 /obj/item/pellet_storage
-	name = "H.M.S.C"
-	desc = "A patent pending Hazardous Material Storage Container designed for holding radioactive materials"
+	name = "radioactive storage container"
+	desc = "A patent pending radioactive storage container designed for holding radioactive materials"
 	//needs icons
 
 /obj/machinery/networked/laser_controller//means that you don't need 100000 network adapters , handles all the lasers and other connections.
-	name = "N.L.A"
-	desc = "The Networked Laser Adapater , adapting lasers to networks for years."
+	name = "networked laser controller"
+	desc = "The Networked Laser Controller , adapting lasers to networks for years."
 	icon = 'icons/obj/machines/fusion.dmi'
 	icon_state = "cab1"
 	var/range = 20//can be increased at the cost of more power usage and slower operation
@@ -140,7 +311,7 @@
 	var/obj/machinery/networked/beamline/list/beamline_components = list()
 	var/disconnect = 0
 	anchored = 1
-	device_tag = "PNET_RESLAD_CONT"
+	device_tag = "PNET_RESLAS_CONT"
 	var/disconnect_position = 0
 	var/disconnect_message = "command=disconnect"
 	New()
@@ -288,12 +459,13 @@
 			src.lens = new/obj/item/lens(src)
 		id = beam_id
 		beam_id++
-
+		processing_items.Add(src)
 	disposing()
 		if (src.beam)
 			src.beam.dispose()
 			src.beam = null
 		laser_control.disconnect(id)
+		processing_items.Remove(src)
 		..()
 
 	process()
@@ -408,6 +580,15 @@
 				src.modifier = modmin
 				return LIMITED
 			return OK
+
+	power_change()
+		if(powered())
+			stat &= ~NOPOWER
+			//src.update_icon()
+		else
+			spawn(rand(0, 15))
+				stat |= NOPOWER
+				//src.update_icon()
  //you can reduce the power and reduce the wavelength
 
 //var for lasers and objects overall
@@ -423,7 +604,8 @@ var/beam_id = 1//starts at 1 , initiatlised at New() creation of beamline opbjec
 	var/prev_amp = 0
 	modmax = 2.5
 	modmin = 0.5
-	modifier = 1.15
+	modifier = 1//just make it do nothing until the value is set
+
 	laser_act(wavelength,power,particle , range)//amplifies the wave at the cost of increasing the wavelength and reducing the range
 		if(powered())
 			use_power(modifier * (1/wavelength) * 150)//hefty amount if the wavelength is small and the power is high
@@ -434,6 +616,9 @@ var/beam_id = 1//starts at 1 , initiatlised at New() creation of beamline opbjec
 			src.beam.dir = src.dir
 		amplifying = 1
 	process()
+		if(stat)
+			amplifying = 0
+			laser_control.disconnect(src.id)
 		if(amplifying)
 			icon_state = "amplifier-1"
 		else
@@ -449,6 +634,22 @@ var/beam_id = 1//starts at 1 , initiatlised at New() creation of beamline opbjec
 	icon = 'icons/obj/machines/beamline64x32.dmi'
 	icon_state = "spectrometer-0"
 
+/obj/machinery/networked/beamline/concentrator// uses a lot of power to reduce the wavelength and increase the range
+	name = "magnetic stabilizer"
+	desc = "A concentrates laser beams that pass through it"
+	icon = 'icons/obj/machines/beamline64x32.dmi'
+	icon_state = "beam_concentrator"
+	modmin = 0.1
+	modmax = 1
+	laser_act(wavelength , power  , particle,range)
+		if(powered())
+			use_power(power * (1/wavelength) * ((1/modifier)**2)*20)//uses lots of power
+			src.beam = new /obj/beam/custom(get_turf(src), range * modifier , power , wavelength * modifier)
+			src.beam.dir = src.dir
+		else
+			src.beam = new /obj/beam/custom(get_turf(src), range * 0.9 , power - 1 , wavelength * 1.5)//no cheating
+			src.beam.dir = src.dir
+/obj/machinery/networked/neutrino_detector//produces power and detects neutrinos emitted by the laser interacting with stuff.
 // code for the laser driver
 //laser
 /datum/computer/file/mainframe_program/driver/laser
@@ -535,7 +736,7 @@ var/beam_id = 1//starts at 1 , initiatlised at New() creation of beamline opbjec
 	proc/change_val(var/value = 0,var/id)
 		message_device("command=set&value=[value]&id=[id]")
 /datum/computer/file/mainframe_program/laser_control
-	name = "Laser Madness"
+	name = "Laser Control"
 	size = 8
 
 	initialize(var/initparams)
@@ -543,7 +744,7 @@ var/beam_id = 1//starts at 1 , initiatlised at New() creation of beamline opbjec
 			mainframe_prog_exit
 			return
 
-		var/list/initlist = dd_text2list(initparams, " ")
+		var/list/initlist = splittext(initparams, " ")
 		if (!initparams || !initlist.len)
 			message_user("No parameters , terminating program")
 			mainframe_prog_exit

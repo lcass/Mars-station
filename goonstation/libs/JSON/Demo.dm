@@ -1,7 +1,7 @@
 
 mob
 	verb/ReadJson(txt as message)
-		usr<<list2json(json2list(txt))
+		usr<<json_encode(json2list(txt))
 
 	verb/ToJson(txt as message)
 		var/list/L = params2list(txt)
@@ -10,4 +10,4 @@ mob
 			if(!isnull(val))
 				L[k] = val
 
-		usr<<list2json(L)
+		usr<<json_encode(L)

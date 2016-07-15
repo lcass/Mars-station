@@ -122,7 +122,7 @@ datum/controller/pathogen
 
 	proc/patient_zero(var/datum/pathogen_cdc/CDC, var/topic_holder)
 		if (CDC.patient_zero)
-			return dd_replacetext(CDC.patient_zero_kname, "%holder%", "\ref[topic_holder]")
+			return replacetext(CDC.patient_zero_kname, "%holder%", "\ref[topic_holder]")
 
 	Topic(href, href_list)
 		var/key = usr.ckey
@@ -597,7 +597,7 @@ datum/controller/pathogen
 					var/datum/pathogen/P = src.cdc_creator[usr.ckey]
 					output += "<h3>Pathogen Creator</h3>"
 					output += "<b>Strain: </b> [P.name_base]<br>"
-					output += "<b>Base mutation:</b> [P.mutation]<br>" 
+					output += "<b>Base mutation:</b> [P.mutation]<br>"
 					output += "<b>Name: </b> [P.name]<br>"
 					if (P.suppressant)
 						output += "<b>Description: </b> [P.desc]<br>"
@@ -1018,7 +1018,7 @@ datum/pathogen
 		var/supp_t = pick(pathogen_controller.path_to_suppressant)
 		suppressant = pathogen_controller.path_to_suppressant[supp_t]
 		suppressant.onadd(src)
-		
+
 		if (!forced_microbody)
 			src.body_type = pathogen_controller.get_microbody(strength + 5)
 			cdc.microbody_type = "[src.body_type]"
@@ -1054,7 +1054,7 @@ datum/pathogen
 
 		if (src.curable_by_suppression < 0 && strength < 10)
 			src.curable_by_suppression = rand(-10 + strength, 10 - strength)
-			if (src.curable_by_suppression < 0)	
+			if (src.curable_by_suppression < 0)
 				src.curable_by_suppression = 0
 		else
 			src.curable_by_suppression = 0
@@ -1130,7 +1130,7 @@ datum/pathogen
 				src.dnasample = sample
 			else
 				src.dnasample = new/datum/pathogendna(src)
-			
+
 
 	proc/generate_weak_effect()
 		switch(rand(1,100))
@@ -1254,7 +1254,7 @@ datum/pathogen
 					continue
 				acted += effect.type
 				if (prob(body_type.activity[stage]))
-					effect:disease_act(infected, src)	
+					effect:disease_act(infected, src)
 		if (!cooldown)
 			if (in_remission)
 				if (prob(abs(advance_speed)))
@@ -1462,7 +1462,7 @@ proc/num2hexoc(num, pad)
 	if (pad <= 0)
 		return ""
 	var/max = 1
-	
+
 	var/neg = 0
 	if (num < 0)
 		num = -num

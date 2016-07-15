@@ -44,6 +44,29 @@
 	icon_state = "santa"
 	item_state = "santa"
 
+/obj/item/clothing/head/helmet/space/rad
+	name = "R.A.D Helmet"
+	desc = "The headpiece of the R.A.D suit"
+	icon_state = "radiation"
+	permeability_coefficient = 0.01
+	heat_transfer_coefficient = 0.10
+	c_flags = COVERSEYES | COVERSMOUTH
+	desc = "Asbestos, right near your face. Perfect!"
+	armor_value_melee = 5
+	radproof = 1
+	seal_hair = 1
+
+/obj/item/clothing/suit/space/rad
+	name = "R.A.D suit"
+	desc = "Radiation and Atmospheric Defensive suit , protects against low pressure environments and radiation"
+	icon_state = "rad"
+	item_state = "rad"
+	icon = 'icons/obj/clothing/overcoats/item_suit_hazard.dmi'
+	wear_image_icon = 'icons/mob/overcoats/worn_suit_hazard.dmi'
+	inhand_image_icon = 'icons/mob/inhand/overcoat/hand_suit_hazard.dmi'
+	radproof = 1
+
+
 /obj/item/clothing/suit/space/santa
 	name = "santa suit"
 	desc = "Festive!"

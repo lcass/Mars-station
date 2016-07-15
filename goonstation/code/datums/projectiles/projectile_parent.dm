@@ -379,6 +379,7 @@ datum/projectile
 		                            eg 1.0 will cause damage = to power while 0.0 would cause just stun = to power */
 
 		sname = "stun"           // name of the projectile setting, used when you change a guns setting
+		supress = 0//the amount the volume is supressed
 		shot_sound = 'sound/weapons/Taser.ogg' // file location for the sound you want it to play
 		shot_number = 0          // How many projectiles should be fired, each will cost the full cost
 		damage_type = D_KINETIC  // What is our damage type
@@ -701,10 +702,10 @@ datum/projectile/snowball
 	if (narrator_mode)
 		playsound(S, 'sound/vox/shoot.ogg', 50, 1)
 	else if(DATA.shot_sound && shooter)
-		playsound(S, DATA.shot_sound, 50)
+		playsound(S, DATA.shot_sound, 50 - DATA.supress)
 		if (isobj(shooter))
 			for (var/mob/M in shooter)
-				M << sound(DATA.shot_sound, volume=50)
+				M << sound(DATA.shot_sound, volume=50 - DATA.supress)
 
 #ifdef DATALOGGER
 	if (game_stats && istype(game_stats))
